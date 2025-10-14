@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Azure OpenAI Chat</title>
+  <style>
+    body {
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: #f4f5f8;
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Floating Chat Button */
+    #chatButton {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      background-color: #0078d7;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      font-size: 28px;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+      transition: background-color 0.2s;
+    }
+
+    #chatButton:hover {
+      background-color: #005fa3;
+    }
+
+    /* Chat Popup Container */
+    #chatPopup {
+      display: none;
+      flex-direction: column;
+      position: fixed;
+      bottom: 100px;
+      right: 30px;
+      width: 360px;
+      height: 500px;
+      background: #ffffff;
+      border-radius: 10px;
+      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+      overflow: hidden;
+    }
+
+    /* Header */
+    #chatHeader {
+      background: #0078d7;
+      color: white;
+      padding: 15px;
+      font-weight: bold;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    #closeChat {
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 18px;
+    }
+
+    /* Chat Messages Area */
+    #chatbox {
+      flex: 1;
+      padding: 10px;
+      overflow-y: auto;
+      background-color: #f9f9f9;
+    }
+
+    .message {
+      margin: 8px 0;
+      display: flex;
+    }
+
+    .user {
+      justify-content: flex-end;
+    }
+
+    .ai {
+      justify-content: flex-start;
+    }
+
+    .bubble {
+      padding: 10px 15px;
+      border-radius: 15px;
+      max-width: 80%;
+      line-height: 1.4;
+    }
+
+    .user .bubble {
+      background: #0078d7;
+      color: white;
+      border-bottom-right-radius: 3px;
+    }
+
+    .ai .bubble {
+      background: #eaeaea;
+      color: #333;
+      border-bottom-left-radius: 3px;
+    }
+
+    /* Input Area */
+    #input-area {
+      display: flex;
+      padding: 10px;
+      border-top: 1px solid #ddd;
+      background: #fff;
+    }
+
+    #userInput {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      outline: none;
+    }
+
+    #sendButton {
+      background: #0078d7;
+      color: white;
+      border: none;
+      margin-left: 8px;
+      padding: 0 16px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    #sendButton:hover {
+      background: #005fa3;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Welcome to Azure OpenAI Demo</h1>
+  <br/>
+  <p>Click the 💬 button to chat!</p>
+
+  <!-- Floating Chat Button -->
+  <button id="chatButton" onclick="toggleChat()">💬</button>
+
+  <!-- Popup Chat Window -->
+  <div id="chatPopup">
+    <div id="chatHeader">
+      Azure AI Chat
+      <span id="closeChat" onclick="toggleChat()">✖</span>
+    </div>
+
+    <div id="chatbox"></div>
+
+    <div id="input-area">
+      <input type="text" id="userInput" placeholder="Type a message..." />
+      <button id="sendButton" onclick="sendMessage()">Send</button>
+    </div>
+  </div>
+
+  <script>
+    function toggleChat() {
+      const popup = document.getElementById("chatPopup");
+      popup.style.display = popup.style.display === "flex" ? "none" : "flex";
+      // Focus input when opening
+      if (popup.style.display === "flex") {
+        document.getElementById("userInput").focus();
+      }
+    }
+
+    // ✅ Enable "Enter" key to send message
+    document.addEventListener("DOMContentLoaded", () => {
+      const input = document.getElementById("userInput");
+      input.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" && !event.shiftKey) {
+          event.preventDefault(); // prevent newline
+          sendMessage();
+        }
+      });
+    });
+
+    async function sendMessage() {
+      const input = document.getElementById("userInput");
+      const message = input.value.trim();
+      if (!message) return;
+
+      addMessage("user", message);
+      input.value = "";
+
+      try {
+        const response = await fetch("/api/chat/ask", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt: message }),
+        });
+
+        const data = await response.json();
+        addMessage("ai", data.aiResponse);
+      } catch (e) {
+        addMessage("ai", "⚠️ Error connecting to the AI service.");
+      }
+    }
+
+    function addMessage(sender, text) {
+      const chatbox = document.getElementById("chatbox");
+      const msgDiv = document.createElement("div");
+      msgDiv.className = "message " + sender;
+
+      const bubble = document.createElement("div");
+      bubble.className = "bubble";
+      bubble.innerText = text;
+
+      msgDiv.appendChild(bubble);
+      chatbox.appendChild(msgDiv);
+      chatbox.scrollTop = chatbox.scrollHeight;
+    }
+  </script>
+</body>
+</html>
