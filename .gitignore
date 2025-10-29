@@ -30,6 +30,9 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Claude Code ###
+.claude/
 .mvn/
 mvnw.cmd
 -p/
